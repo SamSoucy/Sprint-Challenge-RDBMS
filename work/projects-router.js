@@ -24,21 +24,44 @@ router.get('/', (req, res) => {
 
 // ******all actions for a project with the specified id*****/
 
+
 router.get('/:id', (req, res) => {
     const { id } = req.params
-    db("projects")
-        .where({ id })
-        .then(project => {
-    db('actions')
-        .where({ project_id : id })
-        .then(action => {
-            res.status(200).json({project, action})
-        })
-        .catch(err => res.status(500).json(err))
-    })
-    .catch(err => res.status(500).json(err))
-    
-})
+    db('projects')
+      .where('projects.id', id)
+      .then(project => {
+        const oneProject = project[0]
+        db('actions')
+          .select(
+            'actions.id',
+            'actions.description',
+            'actions.notes',
+            'actions.project_id',
+            'actions.completed'
+            
+          )
+          .where('actions.project_id', id)
+          .then(actions => {
+            if (!oneProject) {
+              res.status(404).json({ err: 'project ID is not correct' })
+            } else {
+              res.json({
+                id: oneProject.id,
+                name: oneProject.name,
+                description: oneProject.description,
+                completed: oneProject.completed,
+                actions: actions
+              })
+            }
+          })
+      })
+      .catch(() => {
+        res
+          .status(404)
+          .json({ error: 'This project has no actions' })
+      })
+  })
+
 
 
 
